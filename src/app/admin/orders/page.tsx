@@ -27,7 +27,7 @@ export default async function OrdersPage(props: { searchParams: Promise<{ batch?
           <h3 className="text-3xl font-serif italic text-primary">Orders List</h3>
           
           <div className="flex flex-wrap items-center gap-4">
-            <OrderFilters batches={batches} />
+            <OrderFilters batches={batches || []} />
           </div>
         </div>
         
