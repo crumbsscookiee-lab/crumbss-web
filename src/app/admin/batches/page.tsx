@@ -6,6 +6,9 @@ export default async function BatchesPage() {
   const supabase = await createClient();
   const { data: batches } = await supabase.from('batches').select('*').order('batch_date', { ascending: false });
   const batchesList = batches || [];
+  
+  const { data: productsData } = await supabase.from('products').select('*').eq('is_active', true);
+  const activeProducts = productsData || [];
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -28,7 +31,7 @@ export default async function BatchesPage() {
               <tr className="text-sm tracking-widest uppercase text-primary/50 border-b border-primary/20 bg-background/50">
                 <th className="p-6 md:pl-12 font-medium">Batch ID</th>
                 <th className="p-6 font-medium">Batch Date</th>
-                <th className="p-6 font-medium">Global Quota</th>
+                <th className="p-6 font-medium">Menu Quotas</th>
                 <th className="p-6 font-medium">Toggle PO</th>
                 <th className="p-6 md:pr-12 font-medium text-right">Action</th>
               </tr>
@@ -40,7 +43,16 @@ export default async function BatchesPage() {
                   <input form="create-batch-form" name="batch_date" type="date" required className="bg-transparent border-b border-primary/40 p-2 outline-none font-serif text-xl focus:border-accent text-primary w-full" />
                 </td>
                 <td className="p-6">
-                  <input form="create-batch-form" name="quota" type="number" placeholder="Qty" required className="bg-transparent border-b border-primary/40 p-2 outline-none font-serif text-xl focus:border-accent text-primary w-24" />
+                  <div className="flex flex-col gap-3 min-w-[200px]">
+                    {activeProducts.map(p => (
+                      <label key={p.id} className="flex items-center gap-3 text-sm text-primary/80">
+                        <input form="create-batch-form" type="checkbox" name={`product_${p.id}`} value="on" className="accent-accent w-4 h-4" />
+                        <span className="w-32 truncate">{p.name}</span>
+                        <input form="create-batch-form" type="number" name={`quota_${p.id}`} placeholder="Qty" className="bg-transparent border-b border-primary/40 p-1 outline-none font-mono focus:border-accent text-primary w-16" />
+                      </label>
+                    ))}
+                    {activeProducts.length === 0 && <span className="text-xs text-primary/50">No active menus.</span>}
+                  </div>
                 </td>
                 <td className="p-6">
                   <span className="inline-block px-3 py-1 text-xs tracking-widest uppercase border border-primary/30 text-primary/50 bg-background/50">DRAFT</span>
@@ -53,7 +65,18 @@ export default async function BatchesPage() {
                 <tr key={batch.id} className="border-b border-primary/10 last:border-0 hover:bg-surface/50 transition-colors group">
                   <td className="p-6 md:pl-12 font-mono text-sm text-primary/80">{batch.id}</td>
                   <td className="p-6 font-serif text-xl">{batch.batch_date}</td>
-                  <td className="p-6 text-primary/70 font-mono">{batch.quota}</td>
+                  <td className="p-6 text-primary/70 font-mono">
+                    {batch.menus && Object.keys(batch.menus).length > 0 ? (
+                      <div className="flex flex-col gap-1 text-xs">
+                        {Object.entries(batch.menus).map(([pid, q]) => {
+                          const p = activeProducts.find(ap => ap.id === pid);
+                          return <span key={pid}>{p?.name || 'Unknown'}: {q as number}</span>;
+                        })}
+                      </div>
+                    ) : (
+                      <span>Global: {batch.quota}</span>
+                    )}
+                  </td>
                   <td className="p-6">
                     <BatchToggleButton id={batch.id} isOpen={batch.is_open} />
                   </td>

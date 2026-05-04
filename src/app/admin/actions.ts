@@ -13,8 +13,28 @@ export async function toggleBatchStatus(id: string, currentStatus: boolean) {
 export async function createBatch(formData: FormData) {
   const supabase = await createClient()
   const batch_date = formData.get('batch_date') as string
-  const quota = parseInt(formData.get('quota') as string)
-  const { error } = await supabase.from('batches').insert([{ batch_date, quota, is_open: false }])
+  
+  const menus: Record<string, number> = {};
+  let totalQuota = 0;
+  
+  formData.forEach((value, key) => {
+    if (key.startsWith('product_') && value === 'on') {
+      const productId = key.replace('product_', '');
+      const quotaStr = formData.get(`quota_${productId}`);
+      const quota = parseInt(quotaStr as string) || 0;
+      if (quota > 0) {
+        menus[productId] = quota;
+        totalQuota += quota;
+      }
+    }
+  });
+
+  const { error } = await supabase.from('batches').insert([{ 
+    batch_date, 
+    quota: totalQuota, 
+    menus, 
+    is_open: false 
+  }])
   if (error) console.error("createBatch Error:", error)
   revalidatePath('/admin')
 }

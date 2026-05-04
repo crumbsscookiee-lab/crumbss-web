@@ -12,6 +12,7 @@ export type Batch = {
   id: string;
   batch_date: string;
   quota: number;
+  menus?: Record<string, number>;
   is_open: boolean;
 };
 

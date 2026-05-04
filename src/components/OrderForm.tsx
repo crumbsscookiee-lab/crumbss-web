@@ -80,13 +80,37 @@ export default function OrderForm({ products, activeBatch }: { products: Product
 
       // Decrement Quota based on total items ordered
       const totalQty = selectedItems.reduce((acc, item) => acc + item.qty, 0);
-      const { data: currentBatch } = await supabase.from('batches').select('quota').eq('id', activeBatch.id).single();
+      const { data: currentBatch } = await supabase.from('batches').select('quota, menus').eq('id', activeBatch.id).single();
       
-      if (currentBatch && currentBatch.quota >= totalQty) {
-        await supabase.from('batches').update({ quota: currentBatch.quota - totalQty }).eq('id', activeBatch.id);
+      let updatedMenus = { ...(currentBatch?.menus || {}) };
+      let hasError = false;
+      let errorMsg = '';
+
+      if (currentBatch?.menus && Object.keys(currentBatch.menus).length > 0) {
+        for (const item of selectedItems) {
+          const currentQ = updatedMenus[item.productId] || 0;
+          if (currentQ < item.qty) {
+            const p = products.find(p => p.id === item.productId);
+            hasError = true;
+            errorMsg = `Pemesanan ditolak: Sisa kuota untuk ${p?.name} hanya ${currentQ}, namun Anda memesan ${item.qty}.`;
+            break;
+          }
+          updatedMenus[item.productId] = currentQ - item.qty;
+        }
       } else {
-        throw new Error(`Pemesanan ditolak: Sisa kuota hanya ${currentBatch?.quota || 0} item, namun Anda memesan ${totalQty} item.`);
+        // Fallback to global quota
+        if (!currentBatch || currentBatch.quota < totalQty) {
+          hasError = true;
+          errorMsg = `Pemesanan ditolak: Sisa kuota hanya ${currentBatch?.quota || 0} item, namun Anda memesan ${totalQty} item.`;
+        }
       }
+
+      if (hasError) throw new Error(errorMsg);
+
+      await supabase.from('batches').update({ 
+        quota: (currentBatch?.quota || 0) - totalQty, 
+        menus: updatedMenus 
+      }).eq('id', activeBatch.id);
 
       // Insert Order to DB
       const { error: insertError } = await supabase.from('orders').insert([{
@@ -183,7 +207,14 @@ export default function OrderForm({ products, activeBatch }: { products: Product
                 <div key={product.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-6 px-6 bg-background/5 border-l-2 border-transparent hover:border-accent hover:bg-background/10 transition-colors">
                   <div>
                     <p className="font-serif text-3xl mb-2">{product.name}</p>
-                    <p className="text-background/60 font-light tracking-wider">Rp {product.price.toLocaleString('id-ID')}</p>
+                    <p className="text-background/60 font-light tracking-wider">
+                      Rp {product.price.toLocaleString('id-ID')}
+                      {activeBatch.menus && product.id in activeBatch.menus && (
+                        <span className="ml-4 text-accent text-sm bg-accent/10 px-2 py-1">
+                          Sisa: {activeBatch.menus[product.id]}
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <div className="flex items-center gap-6 mt-4 sm:mt-0 bg-background/10 rounded-full px-2 py-1">
                     <button type="button" className="text-3xl hover:text-accent transition-colors px-4 pb-1" onClick={() => {

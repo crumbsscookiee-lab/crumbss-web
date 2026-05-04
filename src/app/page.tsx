@@ -59,7 +59,7 @@ export default async function Home() {
               CRUMBSS adalah spesialis artisan crispy cookies yang mengedepankan tekstur garing sempurna dan aroma mentega premium yang menggoda. Kami percaya bahwa kebahagiaan sejati ada pada bunyi "kriuk" pertama dan remah-remah lezat yang tertinggal. Dikombinasikan dengan kopi pilihan, CRUMBSS adalah standar baru untuk camilan santai yang estetik, modern, dan nagih.
             </p>
             
-            <div className="space-y-6">
+            {/* <div className="space-y-6">
               <h3 className="text-sm font-serif uppercase tracking-widest text-primary/50">Misi Kami</h3>
               <ul className="space-y-4 text-primary/80 font-light text-sm leading-relaxed">
                 <li className="flex gap-3"><Sparkle size={16} className="text-accent shrink-0 mt-1" /> Menyebarkan kebahagiaan remah demi remah untuk generasi masa kini.</li>
@@ -67,7 +67,7 @@ export default async function Home() {
                 <li className="flex gap-3"><Sparkle size={16} className="text-accent shrink-0 mt-1" /> Membangun koneksi yang hangat melalui pelayanan yang tulus.</li>
                 <li className="flex gap-3"><Sparkle size={16} className="text-accent shrink-0 mt-1" /> Berinovasi konsisten menghadirkan pengalaman rasa baru yang relevan.</li>
               </ul>
-            </div>
+            </div> */}
           </div>
           
           <div className="lg:w-7/12 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-12 mt-12 lg:mt-0">
