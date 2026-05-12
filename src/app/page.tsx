@@ -72,7 +72,7 @@ export default async function Home() {
           
           <div className="lg:w-7/12 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-12 mt-12 lg:mt-0">
             {[
-              { letter: "C", title: "Cuan", desc: "Dibuat untuk mendapatkan keuntungan sebanyak mungkin dengan tetap menjaga kualitas." },
+              { letter: "C", title: "Cuan", desc: "Keuntungan yang terasa sampai ke gigitan terakhir" },
               { letter: "R", title: "Real", desc: "Menggunakan bahan-bahan asli, bukan bahan buatan." },
               { letter: "U", title: "Unique", desc: "Perpaduan rasa yang tidak membosankan (modern twist)." },
               { letter: "N", title: "Noble", desc: "Kualitas bahan kelas atas untuk rasa yang mewah." },
