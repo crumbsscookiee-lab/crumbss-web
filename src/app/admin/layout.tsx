@@ -1,4 +1,4 @@
-import { Cookie, LayoutDashboard, Settings, ShoppingBag, Calendar, Package, Receipt } from "lucide-react";
+import { Cookie, LayoutDashboard, Settings, ShoppingBag, Calendar, Package, Receipt, Banknote } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminLayout({
@@ -42,6 +42,10 @@ export default function AdminLayout({
           <Link href="/admin/expenses" className="flex items-center gap-4 text-primary hover:text-accent font-serif text-2xl transition-colors group">
             <Receipt size={24} className="opacity-50 group-hover:opacity-100 transition-opacity" />
             <span className="italic">Expenses</span>
+          </Link>
+          <Link href="/admin/incomes" className="flex items-center gap-4 text-primary hover:text-accent font-serif text-2xl transition-colors group">
+            <Banknote size={24} className="opacity-50 group-hover:opacity-100 transition-opacity" />
+            <span className="italic">Incomes</span>
           </Link>
           <Link href="/" className="flex items-center gap-4 text-primary/50 hover:text-primary font-serif text-2xl transition-colors group mt-auto">
             <Settings size={24} className="opacity-50 group-hover:opacity-100 transition-opacity" />

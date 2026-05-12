@@ -73,6 +73,21 @@ export async function deleteExpense(id: string) {
   revalidatePath('/admin')
 }
 
+export async function addManualIncome(formData: FormData) {
+  const supabase = await createClient()
+  const amount = parseInt(formData.get('amount') as string)
+  const note = formData.get('note') as string || 'Manual Income'
+  const { error } = await supabase.from('manual_incomes').insert([{ amount, note }])
+  if (error) console.error("addManualIncome Error:", error)
+  revalidatePath('/admin')
+}
+
+export async function deleteManualIncome(id: string) {
+  const supabase = await createClient()
+  await supabase.from('manual_incomes').delete().eq('id', id)
+  revalidatePath('/admin')
+}
+
 export async function createProduct(formData: FormData) {
   const supabase = await createClient()
   const name = formData.get('name') as string

@@ -8,8 +8,11 @@ export default async function AdminDashboard() {
   const supabase = await createClient();
   const { data: allOrders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
   const { data: expenses } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
+  const { data: manualIncomes } = await supabase.from('manual_incomes').select('*').order('created_at', { ascending: false });
 
-  const totalIncome = (allOrders || []).filter(o => o.status === 'confirmed' || o.status === 'done').reduce((acc, o) => acc + o.total_price, 0);
+  const totalAutoIncome = (allOrders || []).filter(o => o.status === 'confirmed' || o.status === 'done').reduce((acc, o) => acc + o.total_price, 0);
+  const totalManualIncome = (manualIncomes || []).reduce((acc, inc) => acc + inc.amount, 0);
+  const totalIncome = totalAutoIncome + totalManualIncome;
   const totalExpense = (expenses || []).reduce((acc, e) => acc + e.amount, 0);
   const profit = totalIncome - totalExpense;
 
@@ -42,13 +45,24 @@ export default async function AdminDashboard() {
       </header>
 
       {/* Financial Tracker */}
-      <section className="grid grid-cols-1 md:grid-cols-3 border-b border-primary/20">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-b border-primary/20">
         <div className="p-8 md:p-12 border-b md:border-b-0 md:border-r border-primary/20 flex flex-col justify-between hover:bg-surface/50 transition-colors">
           <div className="flex justify-between items-start mb-8">
             <p className="text-sm tracking-widest uppercase text-primary/60">Income (Auto)</p>
           </div>
-          <p className="text-4xl md:text-5xl font-serif text-primary">Rp {totalIncome.toLocaleString('id-ID')}</p>
+          <p className="text-4xl md:text-5xl font-serif text-primary">Rp {totalAutoIncome.toLocaleString('id-ID')}</p>
           <p className="text-sm text-primary/40 mt-4">*Calculated from 'Confirmed' and 'Picked Up' orders.</p>
+        </div>
+
+        <div className="p-8 md:p-12 border-b md:border-b-0 md:border-r border-primary/20 flex flex-col justify-between hover:bg-surface/50 transition-colors group relative">
+          <Link href="/admin/incomes" className="absolute inset-0 z-10" />
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4 border-b border-primary/10 pb-6 relative z-20">
+            <p className="text-sm tracking-widest uppercase text-primary/60 whitespace-nowrap">Income (Manual)</p>
+          </div>
+          <p className="text-4xl md:text-5xl font-serif text-accent mb-6">Rp {totalManualIncome.toLocaleString('id-ID')}</p>
+          <div className="mt-auto">
+            <span className="text-sm font-bold tracking-widest uppercase text-accent group-hover:underline flex items-center gap-2">Manage Incomes <ArrowRight size={16} /></span>
+          </div>
         </div>
         
         <div className="p-8 md:p-12 border-b md:border-b-0 md:border-r border-primary/20 flex flex-col justify-between hover:bg-surface/50 transition-colors group relative">

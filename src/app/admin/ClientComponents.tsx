@@ -79,13 +79,13 @@ export function OrderFilters({ batches }: { batches: { id: string, batch_date: s
   )
 }
 
-import { deleteBatch, deleteOrder, deleteExpense, deleteProduct, toggleProductActive } from './actions';
+import { deleteBatch, deleteOrder, deleteExpense, deleteProduct, toggleProductActive, deleteManualIncome } from './actions';
 
 export function ActionButton({ 
   id, actionType, currentStatus 
 }: { 
   id: string, 
-  actionType: 'delete_batch' | 'delete_order' | 'delete_expense' | 'delete_product' | 'toggle_product',
+  actionType: 'delete_batch' | 'delete_order' | 'delete_expense' | 'delete_manual_income' | 'delete_product' | 'toggle_product',
   currentStatus?: boolean
 }) {
   const [isPending, startTransition] = useTransition();
@@ -95,6 +95,7 @@ export function ActionButton({
       if (actionType === 'delete_batch') deleteBatch(id);
       if (actionType === 'delete_order') deleteOrder(id);
       if (actionType === 'delete_expense') deleteExpense(id);
+      if (actionType === 'delete_manual_income') deleteManualIncome(id);
       if (actionType === 'delete_product') deleteProduct(id);
       if (actionType === 'toggle_product' && currentStatus !== undefined) toggleProductActive(id, currentStatus);
     });
