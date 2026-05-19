@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Product, Batch } from '@/lib/api';
-import { ArrowRight, Upload } from 'lucide-react';
+import { ArrowRight, Upload, Download } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
     instagram: '',
     deliveryMethod: 'Pickup',
     address: '',
-    paymentMethod: 'Transfer',
+    paymentMethod: 'QRIS',
   });
   const [selectedItems, setSelectedItems] = useState<{ productId: string, qty: number }[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -44,7 +44,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedItems.length === 0) return alert('Please select at least 1 menu item.');
-    if (formData.paymentMethod === 'Transfer' && !file) return alert('Please upload your proof of transfer.');
+    if (formData.paymentMethod === 'QRIS' && !file) return alert('Please upload your payment proof.');
     
     setIsSubmitting(true);
     
@@ -53,7 +53,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
       let proofUrl = '';
 
       // Handle File Compression & Upload
-      if (file && formData.paymentMethod === 'Transfer') {
+      if (file && formData.paymentMethod === 'QRIS') {
         const options = {
           maxSizeMB: 1,
           maxWidthOrHeight: 1024,
@@ -135,7 +135,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
         return `- ${item.qty}x ${p?.name}`;
       }).join('\n')}\n\nTotal: Rp ${totalPrice.toLocaleString('id-ID')}\nMetode: ${formData.deliveryMethod} - ${formData.paymentMethod}\n\nTerima kasih!`;
       
-      window.open(`https://wa.me/628000000000?text=${encodeURIComponent(message)}`, '_blank');
+      window.open(`https://wa.me/62895418600555?text=${encodeURIComponent(message)}`, '_blank');
       router.refresh();
 
     } catch (err: any) {
@@ -251,7 +251,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
               <div className="space-y-3">
                 <label className="text-sm tracking-widest uppercase text-background/60">Payment</label>
                 <select className="w-full bg-background/5 border-b-2 border-background/20 focus:border-accent py-4 px-4 outline-none transition-colors text-xl font-serif appearance-none rounded-none focus:bg-background/10 text-background" value={formData.paymentMethod} onChange={e => setFormData({...formData, paymentMethod: e.target.value})}>
-                  <option value="Transfer" className="text-primary">Bank Transfer</option>
+                  <option value="QRIS" className="text-primary">QRIS</option>
                   <option value="COD" className="text-primary">Cash on Delivery</option>
                 </select>
               </div>
@@ -263,14 +263,23 @@ export default function OrderForm({ products, activeBatch }: { products: Product
                 </div>
               )}
 
-              {formData.paymentMethod === 'Transfer' && (
+              {formData.paymentMethod === 'QRIS' && (
                 <div className="md:col-span-2 border border-background/20 bg-background/5 p-8 mt-4">
-                  <p className="text-sm tracking-widest uppercase text-background/60 mb-4">Bank Details</p>
-                  <p className="text-4xl font-serif mb-2">BCA 123-456-7890</p>
-                  <p className="text-xl font-light italic text-accent mb-8">Crumbss Bakery</p>
+                  <p className="text-sm tracking-widest uppercase text-background/60 mb-4">QRIS Payment</p>
+                  <div className="mb-8 max-w-[250px]">
+                    {/* Placeholder for QRIS. You can replace /qris.jpg with your actual file path later */}
+                    <img src="/qris.jpeg" alt="QRIS Code" className="w-full h-auto rounded-xl shadow-lg border border-background/20" />
+                    <div className="flex items-center justify-between mt-4">
+                      <p className="text-xl font-light italic text-accent">Crumbss Bakery</p>
+                      <a href="/qris.jpeg" download="QRIS-Crumbss-Bakery.jpeg" className="flex items-center gap-2 text-sm bg-accent/20 hover:bg-accent hover:text-background transition-colors text-accent px-4 py-2 rounded-full cursor-pointer">
+                        <Download size={16} />
+                        <span>Simpan QRIS</span>
+                      </a>
+                    </div>
+                  </div>
                   
                   <div className="space-y-4">
-                    <label className="text-sm tracking-widest uppercase text-background/60 block">Upload Transfer Proof</label>
+                    <label className="text-sm tracking-widest uppercase text-background/60 block">Upload Payment Proof</label>
                     <div className="relative">
                       <input 
                         type="file" 
