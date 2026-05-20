@@ -37,7 +37,57 @@ export function OrderStatusSelect({ id, currentStatus }: { id: string, currentSt
 }
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Filter } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
+import { useState } from 'react';
+
+export function BatchQuotaSelector({ products }: { products: {id: string, name: string}[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button 
+        type="button" 
+        onClick={() => setIsOpen(true)}
+        className="px-4 py-2 text-xs tracking-widest uppercase border border-primary/30 hover:border-accent hover:text-accent transition-colors w-full text-left flex justify-between items-center"
+      >
+        <span>Set Menus</span>
+        <span className="text-lg leading-none">+</span>
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="bg-background border border-primary/20 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 flex justify-between items-center border-b border-primary/20 bg-surface/30">
+              <h3 className="text-2xl font-serif text-primary italic">Select Menus</h3>
+              <button type="button" onClick={() => setIsOpen(false)} className="text-primary/50 hover:text-danger transition-colors p-1">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex flex-col gap-4">
+              {products.map(p => (
+                <label key={p.id} className="flex flex-col gap-3 p-4 border border-primary/10 hover:border-primary/30 bg-surface/10 hover:bg-surface/30 transition-colors cursor-pointer group">
+                  <div className="flex items-start gap-4">
+                    <input form="create-batch-form" type="checkbox" name={`product_${p.id}`} value="on" className="accent-accent w-5 h-5 mt-0.5 cursor-pointer" />
+                    <span className="text-base text-primary/90 font-medium group-hover:text-primary transition-colors leading-tight">{p.name}</span>
+                  </div>
+                  <div className="pl-9">
+                    <input form="create-batch-form" type="number" name={`quota_${p.id}`} placeholder="Quota Qty" className="bg-transparent border-b border-primary/30 p-1 outline-none font-mono text-sm focus:border-accent text-primary w-full max-w-[120px]" />
+                  </div>
+                </label>
+              ))}
+              {products.length === 0 && <span className="text-sm text-primary/50">No active menus found.</span>}
+            </div>
+            <div className="p-6 border-t border-primary/20 bg-surface/30 flex justify-end">
+              <button type="button" onClick={() => setIsOpen(false)} className="text-sm tracking-widest uppercase font-bold text-background bg-primary px-8 py-3 hover:bg-accent transition-colors">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 
 export function OrderFilters({ batches }: { batches: { id: string, batch_date: string }[] }) {
   const router = useRouter();

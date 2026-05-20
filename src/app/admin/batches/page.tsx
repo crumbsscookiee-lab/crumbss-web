@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { createBatch } from "../actions";
-import { BatchToggleButton, ActionButton } from "../ClientComponents";
+import { BatchToggleButton, ActionButton, BatchQuotaSelector } from "../ClientComponents";
 
 export default async function BatchesPage() {
   const supabase = await createClient();
@@ -43,15 +43,8 @@ export default async function BatchesPage() {
                   <input form="create-batch-form" name="batch_date" type="date" required className="bg-transparent border-b border-primary/40 p-2 outline-none font-serif text-xl focus:border-accent text-primary w-full" />
                 </td>
                 <td className="p-6">
-                  <div className="flex flex-col gap-3 min-w-[200px]">
-                    {activeProducts.map(p => (
-                      <label key={p.id} className="flex items-center gap-3 text-sm text-primary/80">
-                        <input form="create-batch-form" type="checkbox" name={`product_${p.id}`} value="on" className="accent-accent w-4 h-4" />
-                        <span className="w-32 truncate">{p.name}</span>
-                        <input form="create-batch-form" type="number" name={`quota_${p.id}`} placeholder="Qty" className="bg-transparent border-b border-primary/40 p-1 outline-none font-mono focus:border-accent text-primary w-16" />
-                      </label>
-                    ))}
-                    {activeProducts.length === 0 && <span className="text-xs text-primary/50">No active menus.</span>}
+                  <div className="w-48">
+                    <BatchQuotaSelector products={activeProducts.map(p => ({id: p.id, name: p.name}))} />
                   </div>
                 </td>
                 <td className="p-6">
