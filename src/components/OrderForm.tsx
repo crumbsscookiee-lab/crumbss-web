@@ -203,34 +203,43 @@ export default function OrderForm({ products, activeBatch }: { products: Product
               <h3 className="text-2xl font-serif mt-2">Selection</h3>
             </div>
             <div className="md:col-span-3 flex flex-col gap-4">
-              {products.map(product => (
-                <div key={product.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-6 px-6 bg-background/5 border-l-2 border-transparent hover:border-accent hover:bg-background/10 transition-colors">
-                  <div>
-                    <p className="font-serif text-3xl mb-2">{product.name}</p>
-                    <p className="text-background/60 font-light tracking-wider">
-                      Rp {product.price.toLocaleString('id-ID')}
-                      {activeBatch.menus && product.id in activeBatch.menus && (
-                        <span className="ml-4 text-accent text-sm bg-accent/10 px-2 py-1">
-                          Sisa: {activeBatch.menus[product.id]}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-6 mt-4 sm:mt-0 bg-background/10 rounded-full px-2 py-1">
-                    <button type="button" className="text-3xl hover:text-accent transition-colors px-4 pb-1" onClick={() => {
-                      const current = selectedItems.find(i => i.productId === product.id)?.qty || 0;
-                      if(current > 0) setSelectedItems(selectedItems.filter(i => i.productId !== product.id || current > 1).map(i => i.productId === product.id ? {...i, qty: current - 1} : i));
-                    }}>-</button>
-                    <span className="w-8 text-center font-serif text-2xl">{selectedItems.find(i => i.productId === product.id)?.qty || 0}</span>
-                    <button type="button" className="text-3xl hover:text-accent transition-colors px-4 pb-1" onClick={() => {
-                      const current = selectedItems.find(i => i.productId === product.id)?.qty || 0;
-                      const exists = selectedItems.find(i => i.productId === product.id);
-                      if(exists) setSelectedItems(selectedItems.map(i => i.productId === product.id ? {...i, qty: current + 1} : i));
-                      else setSelectedItems([...selectedItems, { productId: product.id, qty: 1 }]);
-                    }}>+</button>
-                  </div>
-                </div>
-              ))}
+              {products
+                .filter(p => !activeBatch.menus || Object.keys(activeBatch.menus).length === 0 || p.id in activeBatch.menus)
+                .map(product => {
+                  const sisa = activeBatch.menus && product.id in activeBatch.menus 
+                    ? activeBatch.menus[product.id] 
+                    : undefined;
+                  const currentQty = selectedItems.find(i => i.productId === product.id)?.qty || 0;
+
+                  return (
+                    <div key={product.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-6 px-6 bg-background/5 border-l-2 border-transparent hover:border-accent hover:bg-background/10 transition-colors">
+                      <div>
+                        <p className="font-serif text-3xl mb-2">{product.name}</p>
+                        <p className="text-background/60 font-light tracking-wider">
+                          Rp {product.price.toLocaleString('id-ID')}
+                          {sisa !== undefined && (
+                            <span className="ml-4 text-accent text-sm bg-accent/10 px-2 py-1">
+                              Sisa: {sisa}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-6 mt-4 sm:mt-0 bg-background/10 rounded-full px-2 py-1">
+                        <button type="button" className="text-3xl hover:text-accent transition-colors px-4 pb-1" onClick={() => {
+                          if(currentQty > 0) setSelectedItems(selectedItems.filter(i => i.productId !== product.id || currentQty > 1).map(i => i.productId === product.id ? {...i, qty: currentQty - 1} : i));
+                        }}>-</button>
+                        <span className="w-8 text-center font-serif text-2xl">{currentQty}</span>
+                        <button type="button" className="text-3xl hover:text-accent transition-colors px-4 pb-1 disabled:opacity-50 disabled:hover:text-inherit" 
+                          disabled={sisa !== undefined && currentQty >= sisa}
+                          onClick={() => {
+                          const exists = selectedItems.find(i => i.productId === product.id);
+                          if(exists) setSelectedItems(selectedItems.map(i => i.productId === product.id ? {...i, qty: currentQty + 1} : i));
+                          else setSelectedItems([...selectedItems, { productId: product.id, qty: 1 }]);
+                        }}>+</button>
+                      </div>
+                    </div>
+                  );
+              })}
             </div>
           </div>
 
