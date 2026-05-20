@@ -107,10 +107,15 @@ export default function OrderForm({ products, activeBatch }: { products: Product
 
       if (hasError) throw new Error(errorMsg);
 
-      await supabase.from('batches').update({ 
+      const { error: batchUpdateError } = await supabase.from('batches').update({ 
         quota: (currentBatch?.quota || 0) - totalQty, 
         menus: updatedMenus 
       }).eq('id', activeBatch.id);
+
+      if (batchUpdateError) {
+        console.error("Failed to update batch quota:", batchUpdateError);
+        throw new Error("Gagal mengupdate kuota. Pastikan RLS Supabase mengizinkan public UPDATE pada tabel batches.");
+      }
 
       // Insert Order to DB
       const { error: insertError } = await supabase.from('orders').insert([{

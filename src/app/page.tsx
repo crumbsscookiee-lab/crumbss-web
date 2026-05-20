@@ -3,6 +3,9 @@ import MenuShowcase from "@/components/MenuShowcase";
 import OrderForm from "@/components/OrderForm";
 import { db } from "@/lib/api";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function Home() {
   const activeBatch = await db.batches.getActive();
   const products = await db.products.getOptions();
