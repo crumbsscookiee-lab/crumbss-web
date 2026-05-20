@@ -42,15 +42,43 @@ import { useState } from 'react';
 
 export function BatchQuotaSelector({ products }: { products: {id: string, name: string}[] }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [selections, setSelections] = useState<Record<string, { selected: boolean, quota: string }>>({});
+
+  const handleCheckbox = (id: string, checked: boolean) => {
+    setSelections(prev => ({
+      ...prev,
+      [id]: { ...(prev[id] || { quota: '' }), selected: checked }
+    }));
+  };
+
+  const handleQuota = (id: string, value: string) => {
+    setSelections(prev => ({
+      ...prev,
+      [id]: { ...(prev[id] || { selected: false }), quota: value }
+    }));
+  };
+
+  const activeCount = Object.values(selections).filter(s => s.selected && parseInt(s.quota) > 0).length;
 
   return (
     <>
+      {products.map(p => {
+        const s = selections[p.id];
+        if (!s || !s.selected) return null;
+        return (
+          <div key={`hidden-${p.id}`} className="hidden">
+            <input type="hidden" form="create-batch-form" name={`product_${p.id}`} value="on" />
+            <input type="hidden" form="create-batch-form" name={`quota_${p.id}`} value={s.quota} />
+          </div>
+        );
+      })}
+
       <button 
         type="button" 
         onClick={() => setIsOpen(true)}
         className="px-4 py-2 text-xs tracking-widest uppercase border border-primary/30 hover:border-accent hover:text-accent transition-colors w-full text-left flex justify-between items-center"
       >
-        <span>Set Menus</span>
+        <span>{activeCount > 0 ? `${activeCount} Menus Set` : 'Set Menus'}</span>
         <span className="text-lg leading-none">+</span>
       </button>
 
@@ -64,17 +92,31 @@ export function BatchQuotaSelector({ products }: { products: {id: string, name: 
               </button>
             </div>
             <div className="p-6 overflow-y-auto flex flex-col gap-4">
-              {products.map(p => (
-                <label key={p.id} className="flex flex-col gap-3 p-4 border border-primary/10 hover:border-primary/30 bg-surface/10 hover:bg-surface/30 transition-colors cursor-pointer group">
-                  <div className="flex items-start gap-4">
-                    <input form="create-batch-form" type="checkbox" name={`product_${p.id}`} value="on" className="accent-accent w-5 h-5 mt-0.5 cursor-pointer" />
-                    <span className="text-base text-primary/90 font-medium group-hover:text-primary transition-colors leading-tight">{p.name}</span>
-                  </div>
-                  <div className="pl-9">
-                    <input form="create-batch-form" type="number" name={`quota_${p.id}`} placeholder="Quota Qty" className="bg-transparent border-b border-primary/30 p-1 outline-none font-mono text-sm focus:border-accent text-primary w-full max-w-[120px]" />
-                  </div>
-                </label>
-              ))}
+              {products.map(p => {
+                const s = selections[p.id] || { selected: false, quota: '' };
+                return (
+                  <label key={p.id} className="flex flex-col gap-3 p-4 border border-primary/10 hover:border-primary/30 bg-surface/10 hover:bg-surface/30 transition-colors cursor-pointer group">
+                    <div className="flex items-start gap-4">
+                      <input 
+                        type="checkbox" 
+                        checked={s.selected}
+                        onChange={(e) => handleCheckbox(p.id, e.target.checked)}
+                        className="accent-accent w-5 h-5 mt-0.5 cursor-pointer" 
+                      />
+                      <span className="text-base text-primary/90 font-medium group-hover:text-primary transition-colors leading-tight">{p.name}</span>
+                    </div>
+                    <div className="pl-9">
+                      <input 
+                        type="number" 
+                        placeholder="Quota Qty" 
+                        value={s.quota}
+                        onChange={(e) => handleQuota(p.id, e.target.value)}
+                        className="bg-transparent border-b border-primary/30 p-1 outline-none font-mono text-sm focus:border-accent text-primary w-full max-w-[120px]" 
+                      />
+                    </div>
+                  </label>
+                );
+              })}
               {products.length === 0 && <span className="text-sm text-primary/50">No active menus found.</span>}
             </div>
             <div className="p-6 border-t border-primary/20 bg-surface/30 flex justify-end">
