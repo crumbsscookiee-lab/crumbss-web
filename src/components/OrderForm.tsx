@@ -9,6 +9,9 @@ import { useRouter } from 'next/navigation';
 
 export default function OrderForm({ products, activeBatch }: { products: Product[], activeBatch: Batch | undefined }) {
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     wa: '',
@@ -41,42 +44,15 @@ export default function OrderForm({ products, activeBatch }: { products: Product
     return acc + (product ? product.price * item.qty : 0);
   }, 0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedItems.length === 0) return alert('Please select at least 1 menu item.');
-    if (formData.paymentMethod === 'QRIS' && !file) return alert('Please upload your payment proof.');
     
     setIsSubmitting(true);
     
     try {
       const supabase = createClient();
-      let proofUrl = '';
-
-      // Handle File Compression & Upload
-      if (file && formData.paymentMethod === 'QRIS') {
-        const options = {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1024,
-          useWebWorker: true,
-        };
-        const compressedFile = await imageCompression(file, options);
-        
-        const fileName = `${Date.now()}-${compressedFile.name.replace(/\s+/g, '-')}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('transfer_proofs')
-          .upload(`public/${fileName}`, compressedFile, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-          
-        if (uploadError) {
-          console.error("Upload error details:", uploadError);
-          throw new Error(`Gagal upload bukti transfer: ${uploadError.message}. Pastikan bucket 'transfer_proofs' telah dibuat menjadi public.`);
-        }
-        
-        const { data: publicUrlData } = supabase.storage.from('transfer_proofs').getPublicUrl(`public/${fileName}`);
-        proofUrl = publicUrlData.publicUrl;
-      }
+      const newOrderId = crypto.randomUUID();
 
       // Decrement Quota based on total items ordered
       const totalQty = selectedItems.reduce((acc, item) => acc + item.qty, 0);
@@ -119,6 +95,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
 
       // Insert Order to DB
       const { error: insertError } = await supabase.from('orders').insert([{
+        id: newOrderId,
         customer_name: formData.name,
         wa_number: formData.wa,
         instagram: formData.instagram,
@@ -127,21 +104,18 @@ export default function OrderForm({ products, activeBatch }: { products: Product
         total_price: totalPrice,
         payment_method: formData.paymentMethod,
         delivery_address: formData.deliveryMethod === 'Delivery' ? formData.address : null,
-        proof_url: proofUrl || null,
+        proof_url: null,
         status: 'pending'
       }]);
 
       if (insertError) throw insertError;
 
-      // WhatsApp Redirect
-      setSuccess(true);
-      const message = `Halo Crumbss! Saya ingin order PO Batch ${activeBatch.batch_date}:\n\nNama: ${formData.name}\nPesanan:\n${selectedItems.map(item => {
-        const p = products.find(prod => prod.id === item.productId);
-        return `- ${item.qty}x ${p?.name}`;
-      }).join('\n')}\n\nTotal: Rp ${totalPrice.toLocaleString('id-ID')}\nMetode: ${formData.deliveryMethod} - ${formData.paymentMethod}\n\nTerima kasih!`;
-      
-      window.open(`https://wa.me/62895418600555?text=${encodeURIComponent(message)}`, '_blank');
-      router.refresh();
+      if (formData.paymentMethod === 'QRIS') {
+        setCreatedOrderId(newOrderId);
+        setStep(2);
+      } else {
+        finishOrder();
+      }
 
     } catch (err: any) {
       alert(err.message || "Terjadi kesalahan saat memproses pesanan.");
@@ -150,15 +124,138 @@ export default function OrderForm({ products, activeBatch }: { products: Product
     }
   };
 
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) return alert('Please upload your payment proof.');
+    
+    setIsSubmitting(true);
+    try {
+      const supabase = createClient();
+      let proofUrl = '';
+
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+      
+      const fileName = `${Date.now()}-${compressedFile.name.replace(/\s+/g, '-')}`;
+      const { error: uploadError } = await supabase.storage
+        .from('transfer_proofs')
+        .upload(`public/${fileName}`, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+        
+      if (uploadError) {
+        console.error("Upload error details:", uploadError);
+        throw new Error(`Gagal upload bukti transfer: ${uploadError.message}`);
+      }
+      
+      const { data: publicUrlData } = supabase.storage.from('transfer_proofs').getPublicUrl(`public/${fileName}`);
+      proofUrl = publicUrlData.publicUrl;
+
+      // Update Order with proof_url
+      const { error: updateError } = await supabase.from('orders').update({ proof_url: proofUrl }).eq('id', createdOrderId);
+      if (updateError) {
+        console.error("Failed to update order proof:", updateError);
+        throw new Error("Gagal menyimpan bukti pembayaran ke database. Pastikan Policy UPDATE public pada orders sudah dibuat.");
+      }
+
+      finishOrder();
+
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan saat mengupload bukti pembayaran.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const finishOrder = () => {
+    setSuccess(true);
+    const message = `Halo Crumbss! Saya ingin order PO Batch ${activeBatch.batch_date}:\n\nNama: ${formData.name}\nPesanan:\n${selectedItems.map(item => {
+      const p = products.find(prod => prod.id === item.productId);
+      return `- ${item.qty}x ${p?.name}`;
+    }).join('\n')}\n\nTotal: Rp ${totalPrice.toLocaleString('id-ID')}\nMetode: ${formData.deliveryMethod} - ${formData.paymentMethod}\n\nTerima kasih!`;
+    
+    window.open(`https://wa.me/62895418600555?text=${encodeURIComponent(message)}`, '_blank');
+    router.refresh();
+  };
+
   if (success) {
     return (
       <section className="py-32 px-6 md:px-12 bg-primary text-background relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <h3 className="text-6xl md:text-8xl font-serif mb-8 text-background">Recorded.</h3>
           <p className="text-background/70 text-2xl font-light mb-12">Redirecting to WhatsApp for confirmation.</p>
-          <button onClick={() => { setSuccess(false); setFile(null); }} className="text-accent font-serif italic text-xl border-b border-accent pb-1 hover:text-background hover:border-background transition-all">
+          <button onClick={() => { 
+            setSuccess(false); 
+            setStep(1); 
+            setFile(null); 
+            setSelectedItems([]); 
+            setCreatedOrderId(null);
+          }} className="text-accent font-serif italic text-xl border-b border-accent pb-1 hover:text-background hover:border-background transition-all">
             Start a new order
           </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (step === 2) {
+    return (
+      <section className="py-32 px-6 md:px-12 relative z-10 bg-primary text-background selection:bg-accent selection:text-background" id="payment-form">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-16 border-b border-background/20 pb-8 text-center md:text-left">
+            <h2 className="text-5xl md:text-7xl font-serif tracking-tighter leading-[0.8] text-background mb-4">
+              Slot<br/><span className="italic text-accent">Secured.</span>
+            </h2>
+            <p className="text-background/70 text-lg font-light">Pesanan Anda telah diamankan. Silakan selesaikan pembayaran untuk memproses pesanan.</p>
+          </div>
+
+          <form onSubmit={handlePaymentSubmit} className="space-y-12">
+            <div className="border border-background/20 bg-background/5 p-8 md:p-12">
+              <p className="text-sm tracking-widest uppercase text-background/60 mb-8 text-center">QRIS Payment</p>
+              <div className="mb-12 max-w-[300px] mx-auto">
+                <img src="/qris.jpeg" alt="QRIS Code" className="w-full h-auto rounded-xl shadow-lg border border-background/20" />
+                <div className="flex flex-col items-center mt-6 gap-4">
+                  <p className="text-2xl font-light italic text-accent">Crumbss Bakery</p>
+                  <a href="/qris.jpeg" download="QRIS-Crumbss-Bakery.jpeg" className="flex items-center gap-2 text-sm bg-accent/20 hover:bg-accent hover:text-background transition-colors text-accent px-6 py-3 rounded-full cursor-pointer">
+                    <Download size={16} />
+                    <span>Simpan QRIS</span>
+                  </a>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <label className="text-sm tracking-widest uppercase text-background/60 block text-center mb-6">Total Tagihan: <span className="text-3xl font-serif text-accent block mt-2">Rp {totalPrice.toLocaleString('id-ID')}</span></label>
+                <div className="relative max-w-md mx-auto">
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    required
+                  />
+                  <div className={`border-2 border-dashed ${file ? 'border-accent bg-accent/10' : 'border-background/30 hover:border-accent'} p-8 text-center transition-colors flex flex-col items-center justify-center`}>
+                    <Upload size={32} className={file ? 'text-accent mb-4' : 'text-background/40 mb-4'} />
+                    <p className={`font-serif text-xl ${file ? 'text-accent' : 'text-background/70'}`}>
+                      {file ? file.name : 'Click or drag image here'}
+                    </p>
+                    <p className="text-sm tracking-widest uppercase text-background/40 mt-3">Upload Bukti Transfer (Max 5MB)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center md:justify-end">
+              <button disabled={isSubmitting} type="submit" className="group flex items-center justify-between gap-4 w-full md:w-auto bg-background text-primary hover:bg-accent hover:text-background transition-colors duration-500 py-6 px-12 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl">
+                <span className="font-serif text-2xl italic">{isSubmitting ? 'Uploading...' : 'Complete Order'}</span>
+                {!isSubmitting && <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />}
+              </button>
+            </div>
+          </form>
         </div>
       </section>
     );
@@ -178,7 +275,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
           </div>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-24">
+        <form onSubmit={handleOrderSubmit} className="space-y-24">
           {/* Section 01 */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-16">
             <div className="md:col-span-1 border-t border-background/20 pt-4">
@@ -276,43 +373,6 @@ export default function OrderForm({ products, activeBatch }: { products: Product
                   <textarea required className="w-full bg-background/5 border-b-2 border-background/20 focus:border-accent py-4 px-4 outline-none transition-colors text-xl font-serif min-h-[120px] resize-none focus:bg-background/10 text-background" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Street, City, Details..." />
                 </div>
               )}
-
-              {formData.paymentMethod === 'QRIS' && (
-                <div className="md:col-span-2 border border-background/20 bg-background/5 p-8 mt-4">
-                  <p className="text-sm tracking-widest uppercase text-background/60 mb-4">QRIS Payment</p>
-                  <div className="mb-8 max-w-[250px]">
-                    {/* Placeholder for QRIS. You can replace /qris.jpg with your actual file path later */}
-                    <img src="/qris.jpeg" alt="QRIS Code" className="w-full h-auto rounded-xl shadow-lg border border-background/20" />
-                    <div className="flex items-center justify-between mt-4">
-                      <p className="text-xl font-light italic text-accent">Crumbss Bakery</p>
-                      <a href="/qris.jpeg" download="QRIS-Crumbss-Bakery.jpeg" className="flex items-center gap-2 text-sm bg-accent/20 hover:bg-accent hover:text-background transition-colors text-accent px-4 py-2 rounded-full cursor-pointer">
-                        <Download size={16} />
-                        <span>Simpan QRIS</span>
-                      </a>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <label className="text-sm tracking-widest uppercase text-background/60 block">Upload Payment Proof</label>
-                    <div className="relative">
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                        required
-                      />
-                      <div className={`border-2 border-dashed ${file ? 'border-accent bg-accent/10' : 'border-background/30 hover:border-accent'} p-6 text-center transition-colors flex flex-col items-center justify-center`}>
-                        <Upload size={24} className={file ? 'text-accent mb-2' : 'text-background/40 mb-2'} />
-                        <p className={`font-serif text-lg ${file ? 'text-accent' : 'text-background/70'}`}>
-                          {file ? file.name : 'Click or drag image here'}
-                        </p>
-                        <p className="text-xs tracking-widest uppercase text-background/40 mt-2">Max 5MB (Auto-compressed)</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -322,7 +382,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
               <p className="text-5xl md:text-7xl font-serif text-accent">Rp {totalPrice.toLocaleString('id-ID')}</p>
             </div>
             <button disabled={isSubmitting || totalPrice === 0 || activeBatch.quota <= 0} type="submit" className="group flex items-center justify-between gap-4 w-full md:w-auto bg-background text-primary hover:bg-accent hover:text-background transition-colors duration-500 py-6 px-12 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl">
-              <span className="font-serif text-2xl italic">{isSubmitting ? 'Processing...' : activeBatch.quota <= 0 ? 'Quota Full' : 'Submit Order'}</span>
+              <span className="font-serif text-2xl italic">{isSubmitting ? 'Processing...' : activeBatch.quota <= 0 ? 'Quota Full' : 'Secure Slot & Order'}</span>
               {!isSubmitting && activeBatch.quota > 0 && <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />}
             </button>
           </div>

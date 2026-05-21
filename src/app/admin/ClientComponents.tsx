@@ -163,7 +163,8 @@ export function OrderFilters({ batches }: { batches: { id: string, batch_date: s
           className="bg-transparent text-sm tracking-widest uppercase text-primary/80 outline-none appearance-none font-bold pr-4"
         >
           <option value="">All Methods</option>
-          <option value="Transfer">Transfer</option>
+          <option value="QRIS">QRIS</option>
+          <option value="Transfer">Transfer (Old)</option>
           <option value="COD">COD</option>
         </select>
       </div>
@@ -181,6 +182,7 @@ export function ActionButton({
   currentStatus?: boolean
 }) {
   const [isPending, startTransition] = useTransition();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleAction = () => {
     startTransition(() => {
@@ -209,14 +211,40 @@ export function ActionButton({
   }
 
   return (
-    <button 
-      onClick={() => {
-        if (confirm('Are you sure you want to delete this record?')) handleAction();
-      }} 
-      disabled={isPending}
-      className={`text-sm tracking-widest uppercase font-bold text-danger/50 hover:text-danger transition-colors ${isPending ? 'opacity-50' : ''}`}
-    >
-      {isPending ? '...' : 'Delete'}
-    </button>
+    <>
+      <button 
+        onClick={() => setShowConfirm(true)} 
+        disabled={isPending}
+        className={`text-sm tracking-widest uppercase font-bold text-danger/50 hover:text-danger transition-colors ${isPending ? 'opacity-50' : ''}`}
+      >
+        {isPending ? '...' : 'Delete'}
+      </button>
+
+      {showConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="bg-background border border-danger/30 w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-3xl font-serif text-danger italic mb-2">Delete Record</h3>
+            <p className="text-primary/70 mb-8 font-light">Are you sure you want to delete this record? This action cannot be undone.</p>
+            <div className="flex justify-end gap-4">
+              <button 
+                onClick={() => setShowConfirm(false)} 
+                className="px-6 py-2 text-sm tracking-widest uppercase text-primary/60 hover:text-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  setShowConfirm(false);
+                  handleAction();
+                }} 
+                className="px-6 py-2 text-sm tracking-widest uppercase font-bold bg-danger text-background hover:bg-danger/80 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

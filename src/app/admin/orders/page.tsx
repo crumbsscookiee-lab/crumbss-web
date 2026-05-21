@@ -79,11 +79,11 @@ export default async function OrdersPage(props: { searchParams: Promise<{ batch?
                       </td>
                       <td className="p-6 font-serif text-xl text-primary align-top">Rp {order.total_price.toLocaleString('id-ID')}</td>
                       <td className="p-6 align-top">
-                        {order.payment_method === 'Transfer' && order.proof_url ? (
+                        {['Transfer', 'QRIS'].includes(order.payment_method) && order.proof_url ? (
                           <a href={order.proof_url} target="_blank" rel="noopener noreferrer" className="text-accent underline text-sm italic font-serif hover:text-primary transition-colors">
                             View Image
                           </a>
-                        ) : order.payment_method === 'Transfer' && !order.proof_url ? (
+                        ) : ['Transfer', 'QRIS'].includes(order.payment_method) && !order.proof_url ? (
                           <span className="text-danger/50 text-sm italic font-serif">No Image Uploaded</span>
                         ) : (
                           <span className="text-primary/30 text-sm italic font-serif">N/A</span>
