@@ -44,7 +44,7 @@ export function DailyTrendChart({ data }: { data: DailyData[] }) {
           <Tooltip 
             contentStyle={{ backgroundColor: '#fff', border: '1px solid #7c2d12', borderRadius: '0' }}
             itemStyle={{ color: '#7c2d12', fontWeight: 'bold' }}
-            formatter={(value: number) => [`Rp ${value.toLocaleString('id-ID')}`, 'Income']}
+            formatter={(value: any) => [`Rp ${Number(value).toLocaleString('id-ID')}`, 'Income']}
           />
           <Line 
             type="monotone" 
@@ -105,7 +105,7 @@ export function FinancialPieChart({ data }: { data: FinancialData[] }) {
             ))}
           </Pie>
           <Tooltip 
-            formatter={(value: number) => `Rp ${value.toLocaleString('id-ID')}`}
+            formatter={(value: any) => `Rp ${Number(value).toLocaleString('id-ID')}`}
           />
           <Legend iconType="circle" />
         </PieChart>
