@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, Cormorant_Garamond } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-background text-primary bg-grain relative">
         <div className="absolute inset-0 bg-grain pointer-events-none opacity-[0.03] mix-blend-multiply z-50 fixed"></div>
         {children}
+        <Analytics />
       </body>
     </html>
   );
