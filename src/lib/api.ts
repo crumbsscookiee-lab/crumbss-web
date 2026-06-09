@@ -6,6 +6,7 @@ export type Product = {
   price: number;
   is_active: boolean;
   image_url?: string;
+  taste_description?: string;
 };
 
 export type Batch = {
