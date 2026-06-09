@@ -92,7 +92,13 @@ export async function createProduct(formData: FormData) {
   const supabase = await createClient()
   const name = formData.get('name') as string
   const price = parseInt(formData.get('price') as string)
-  const { error } = await supabase.from('products').insert([{ name, price, is_active: true }])
+  const taste_description = formData.get('taste_description') as string
+  const { error } = await supabase.from('products').insert([{ 
+    name, 
+    price, 
+    taste_description,
+    is_active: true 
+  }])
   if (error) console.error("createProduct Error:", error)
   revalidatePath('/admin')
 }
@@ -107,6 +113,30 @@ export async function deleteProduct(id: string) {
   const supabase = await createClient()
   await supabase.from('products').delete().eq('id', id)
   revalidatePath('/admin')
+}
+
+export async function saveSocialMetrics(formData: FormData) {
+  const supabase = await createClient()
+  const date = formData.get('date') as string
+  const instagram_followers = parseInt(formData.get('instagram_followers') as string) || 0
+  const instagram_likes = parseInt(formData.get('instagram_likes') as string) || 0
+  const instagram_views = parseInt(formData.get('instagram_views') as string) || 0
+  const tiktok_followers = parseInt(formData.get('tiktok_followers') as string) || 0
+  const tiktok_likes = parseInt(formData.get('tiktok_likes') as string) || 0
+  const tiktok_views = parseInt(formData.get('tiktok_views') as string) || 0
+
+  const { error } = await supabase.from('social_metrics').upsert({
+    date,
+    instagram_followers,
+    instagram_likes,
+    instagram_views,
+    tiktok_followers,
+    tiktok_likes,
+    tiktok_views
+  }, { onConflict: 'date' })
+
+  if (error) console.error("saveSocialMetrics Error:", error)
+  revalidatePath('/admin/analysis')
 }
 
 export async function logout() {

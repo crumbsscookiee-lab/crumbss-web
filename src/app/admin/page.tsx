@@ -131,6 +131,13 @@ export default async function AdminDashboard() {
           <p className="text-4xl font-serif text-accent relative z-10">Rp {profit.toLocaleString('id-ID')}</p>
           <p className="text-xs text-background/40 mt-4 relative z-10">*Calculated net earnings.</p>
         </div>
+
+        <div className="p-8 border-b md:border-b-0 border-primary/20 flex flex-col justify-between hover:bg-surface/50 transition-colors group relative bg-accent/5">
+          <Link href="/admin/analysis" className="absolute inset-0 z-10" />
+          <p className="text-sm tracking-widest uppercase text-accent font-bold mb-8">Growth Analysis</p>
+          <p className="text-4xl font-serif text-primary mb-6 flex items-center gap-2">Stats <TrendingUp size={24} /></p>
+          <span className="text-xs font-bold tracking-widest uppercase text-accent group-hover:underline flex items-center gap-2">View Trends <ArrowRight size={14} /></span>
+        </div>
       </section>
 
       {/* Visual Analytics Section */}

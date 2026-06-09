@@ -86,6 +86,83 @@ export function TopProductsChart({ data }: { data: ProductData[] }) {
   );
 }
 
+export function GeneralLineChart({ data, dataKey, color = "#ea580c", label = "Value" }: { data: any[], dataKey: string, color?: string, label?: string }) {
+  return (
+    <div className="h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          <XAxis 
+            dataKey="date" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#7c2d12', fontSize: 10, fontWeight: 'bold' }} 
+            dy={10}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#7c2d12', fontSize: 11 }} 
+          />
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #7c2d12', borderRadius: '0' }}
+            itemStyle={{ color: '#7c2d12', fontWeight: 'bold' }}
+            formatter={(value: any) => [value.toLocaleString('id-ID'), label]}
+          />
+          <Line 
+            type="monotone" 
+            dataKey={dataKey} 
+            stroke={color} 
+            strokeWidth={3} 
+            dot={{ r: 4, fill: color }} 
+            activeDot={{ r: 6, fill: '#7c2d12' }} 
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function MultiLineChart({ data, lines }: { data: any[], lines: { key: string, color: string, label: string }[] }) {
+  return (
+    <div className="h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          <XAxis 
+            dataKey="date" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#7c2d12', fontSize: 10, fontWeight: 'bold' }} 
+            dy={10}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#7c2d12', fontSize: 11 }} 
+          />
+          <Tooltip 
+            contentStyle={{ backgroundColor: '#fff', border: '1px solid #7c2d12', borderRadius: '0' }}
+            itemStyle={{ fontWeight: 'bold' }}
+          />
+          <Legend />
+          {lines.map(line => (
+            <Line 
+              key={line.key}
+              type="monotone" 
+              dataKey={line.key} 
+              name={line.label}
+              stroke={line.color} 
+              strokeWidth={2} 
+              dot={{ r: 3, fill: line.color }} 
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function FinancialPieChart({ data }: { data: FinancialData[] }) {
   return (
     <div className="h-[300px] w-full">

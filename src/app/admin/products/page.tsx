@@ -29,6 +29,7 @@ export default async function ProductsPage() {
               <tr className="text-sm tracking-widest uppercase text-primary/50 border-b border-primary/20 bg-background/50">
                 <th className="p-6 md:pl-12 font-medium">Product ID</th>
                 <th className="p-6 font-medium">Product Name</th>
+                <th className="p-6 font-medium">Taste Description</th>
                 <th className="p-6 font-medium">Price (Rp)</th>
                 <th className="p-6 font-medium">Status</th>
                 <th className="p-6 md:pr-12 font-medium text-right">Action</th>
@@ -39,6 +40,9 @@ export default async function ProductsPage() {
                 <td className="p-6 md:pl-12 font-mono text-sm text-primary/40">NEW</td>
                 <td className="p-6">
                   <input form="create-product-form" name="name" type="text" placeholder="Cookie Name" required className="bg-transparent border-b border-primary/40 p-2 outline-none font-serif text-xl focus:border-accent text-primary w-full" />
+                </td>
+                <td className="p-6">
+                  <textarea form="create-product-form" name="taste_description" placeholder="Describe the flavor profile..." className="bg-transparent border border-primary/20 p-2 outline-none font-sans text-sm focus:border-accent text-primary w-full min-h-[60px]" />
                 </td>
                 <td className="p-6">
                   <input form="create-product-form" name="price" type="number" placeholder="Price" required className="bg-transparent border-b border-primary/40 p-2 outline-none font-serif text-xl focus:border-accent text-primary w-32" />
@@ -54,6 +58,7 @@ export default async function ProductsPage() {
                 <tr key={product.id} className="border-b border-primary/10 last:border-0 hover:bg-surface/50 transition-colors group">
                   <td className="p-6 md:pl-12 font-mono text-sm text-primary/80">{product.id.split('-')[1] || product.id.slice(0, 8)}</td>
                   <td className="p-6 font-serif text-xl">{product.name}</td>
+                  <td className="p-6 text-sm text-primary/60 max-w-xs">{product.taste_description || '-'}</td>
                   <td className="p-6 text-primary/70 font-mono">{product.price.toLocaleString('id-ID')}</td>
                   <td className="p-6">
                     <ActionButton id={product.id} actionType="toggle_product" currentStatus={product.is_active} />

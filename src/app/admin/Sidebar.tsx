@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Cookie, LayoutDashboard, Settings, ShoppingBag, Calendar, Package, Receipt, Banknote, Menu, X } from "lucide-react";
+import { Cookie, LayoutDashboard, Settings, ShoppingBag, Calendar, Package, Receipt, Banknote, Menu, X, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -17,6 +17,7 @@ export default function Sidebar() {
   const navLinks = [
     { href: "/admin", icon: LayoutDashboard, label: "Overview" },
     { href: "/admin/orders", icon: ShoppingBag, label: "Orders" },
+    { href: "/admin/analysis", icon: TrendingUp, label: "Analysis" },
     { href: "/admin/batches", icon: Calendar, label: "Batches" },
     { href: "/admin/products", icon: Package, label: "Products" },
     { href: "/admin/expenses", icon: Receipt, label: "Expenses" },

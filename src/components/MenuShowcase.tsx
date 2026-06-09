@@ -22,7 +22,14 @@ export default async function MenuShowcase() {
           >
             <div className="flex items-center gap-8">
               <span className="text-2xl font-serif text-accent/50 font-light">0{idx + 1}</span>
-              <h3 className="font-serif text-4xl md:text-5xl group-hover:translate-x-4 transition-transform duration-500 ease-out">{product.name}</h3>
+              <div className="flex flex-col">
+                <h3 className="font-serif text-4xl md:text-5xl group-hover:translate-x-4 transition-transform duration-500 ease-out">{product.name}</h3>
+                {product.taste_description && (
+                  <p className="text-primary/60 text-sm mt-2 italic font-light group-hover:translate-x-4 transition-transform duration-700 delay-75 max-w-sm">
+                    {product.taste_description}
+                  </p>
+                )}
+              </div>
             </div>
             
             <div className="mt-4 md:mt-0 flex items-center gap-12 w-full md:w-auto justify-between md:justify-end">
