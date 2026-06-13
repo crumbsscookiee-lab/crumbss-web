@@ -18,42 +18,75 @@ export default async function AnalysisPage() {
     .select('*')
     .order('date', { ascending: true });
 
-  // Process Customer Growth Data
-  const customerGrowthData: any[] = [];
+  // Process Customer Growth Data (Weekly Grouping)
   const uniqueCustomers = new Set();
-  
-  const dailyCustomers: Record<string, { date: string, total: number, unique: number }> = {};
+  const weeklyCustomers: Record<string, { date: string, unique: number, _originalDate: Date }> = {};
   
   (orders || []).forEach(order => {
-    const date = new Date(order.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-    if (!dailyCustomers[date]) {
-      dailyCustomers[date] = { date, total: 0, unique: 0 };
-    }
-    dailyCustomers[date].total += 1;
+    const d = new Date(order.created_at);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+    const weekKey = monday.toISOString().split('T')[0];
+    const weekLabel = monday.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+
     if (!uniqueCustomers.has(order.wa_number)) {
       uniqueCustomers.add(order.wa_number);
-      dailyCustomers[date].unique = uniqueCustomers.size;
+    }
+
+    // We want the total unique customers up to the end of that week
+    if (!weeklyCustomers[weekKey] || new Date(order.created_at) > weeklyCustomers[weekKey]._originalDate) {
+      weeklyCustomers[weekKey] = {
+        date: weekLabel,
+        unique: uniqueCustomers.size,
+        _originalDate: new Date(order.created_at)
+      };
     } else {
-      dailyCustomers[date].unique = uniqueCustomers.size;
+      // Still need to update the unique count if more customers were added later in the week
+      weeklyCustomers[weekKey].unique = uniqueCustomers.size;
     }
   });
 
-  const customerChartData = Object.values(dailyCustomers);
+  const customerChartData = Object.values(weeklyCustomers).sort((a, b) => 
+    a._originalDate.getTime() - b._originalDate.getTime()
+  );
 
-  // Process Social Metrics for Charts
-  const socialChartData = (socialMetrics || []).map(m => ({
-    ...m,
-    date: new Date(m.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
-  }));
+  // Process Social Metrics for Charts (Weekly Grouping)
+  const groupedWeeklyMetrics: Record<string, any> = {};
+  
+  (socialMetrics || []).forEach(m => {
+    const d = new Date(m.date);
+    // Get the Monday of the week
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+    const weekKey = monday.toISOString().split('T')[0];
+    const weekLabel = monday.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+
+    // For metrics, we want the latest value in that week
+    if (!groupedWeeklyMetrics[weekKey] || new Date(m.date) >= new Date(groupedWeeklyMetrics[weekKey]._originalDate)) {
+      groupedWeeklyMetrics[weekKey] = {
+        ...m,
+        date: weekLabel,
+        _originalDate: m.date
+      };
+    }
+  });
+
+  const socialChartData = Object.values(groupedWeeklyMetrics).sort((a, b) => 
+    new Date(a._originalDate).getTime() - new Date(b._originalDate).getTime()
+  );
 
   const today = new Date().toISOString().split('T')[0];
   const latestMetrics = socialMetrics?.[socialMetrics.length - 1] || {
     instagram_followers: 0,
     instagram_likes: 0,
     instagram_views: 0,
+    instagram_posts: 0,
     tiktok_followers: 0,
     tiktok_likes: 0,
-    tiktok_views: 0
+    tiktok_views: 0,
+    tiktok_posts: 0
   };
 
   return (
@@ -91,7 +124,7 @@ export default async function AnalysisPage() {
                   <Camera size={20} className="text-[#E1306C]" />
                   <span className="font-bold tracking-widest uppercase text-sm">Instagram</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Followers</label>
                     <input name="instagram_followers" type="number" placeholder={latestMetrics.instagram_followers.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
@@ -104,6 +137,10 @@ export default async function AnalysisPage() {
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Views</label>
                     <input name="instagram_views" type="number" placeholder={latestMetrics.instagram_views.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Posts</label>
+                    <input name="instagram_posts" type="number" placeholder={latestMetrics.instagram_posts?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                  </div>
                 </div>
               </div>
 
@@ -113,7 +150,7 @@ export default async function AnalysisPage() {
                   <VideoIcon size={20} className="text-[#00F2EA]" />
                   <span className="font-bold tracking-widest uppercase text-sm">TikTok</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Followers</label>
                     <input name="tiktok_followers" type="number" placeholder={latestMetrics.tiktok_followers?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
@@ -125,6 +162,10 @@ export default async function AnalysisPage() {
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Views</label>
                     <input name="tiktok_views" type="number" placeholder={latestMetrics.tiktok_views?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Posts</label>
+                    <input name="tiktok_posts" type="number" placeholder={latestMetrics.tiktok_posts?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                 </div>
               </div>
@@ -138,36 +179,40 @@ export default async function AnalysisPage() {
       </section>
 
       <section className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Followers Growth */}
+        {/* Instagram Analysis */}
         <div className="bg-background border border-primary/20 p-8 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3 text-primary">
-              <Users size={20} className="text-accent" />
-              <h3 className="text-2xl font-serif italic">Followers Comparison</h3>
+              <Camera size={20} className="text-[#E1306C]" />
+              <h3 className="text-2xl font-serif italic">Instagram Performance (Weekly)</h3>
             </div>
           </div>
           <MultiLineChart 
             data={socialChartData}
             lines={[
-              { key: 'instagram_followers', color: '#E1306C', label: 'Instagram' },
-              { key: 'tiktok_followers', color: '#00F2EA', label: 'TikTok' }
+              { key: 'instagram_followers', color: '#E1306C', label: 'Followers' },
+              { key: 'instagram_likes', color: '#833AB4', label: 'Likes' },
+              { key: 'instagram_views', color: '#F77737', label: 'Views' },
+              { key: 'instagram_posts', color: '#FFDC80', label: 'Posts' }
             ]}
           />
         </div>
 
-        {/* Engagement Chart */}
+        {/* TikTok Analysis */}
         <div className="bg-background border border-primary/20 p-8 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3 text-primary">
-              <Heart size={20} className="text-accent" />
-              <h3 className="text-2xl font-serif italic">Total Views Comparison</h3>
+              <VideoIcon size={20} className="text-[#00F2EA]" />
+              <h3 className="text-2xl font-serif italic">TikTok Performance (Weekly)</h3>
             </div>
           </div>
           <MultiLineChart 
             data={socialChartData}
             lines={[
-              { key: 'instagram_views', color: '#E1306C', label: 'IG Views' },
-              { key: 'tiktok_views', color: '#00F2EA', label: 'TT Views' }
+              { key: 'tiktok_followers', color: '#00F2EA', label: 'Followers' },
+              { key: 'tiktok_likes', color: '#FF0050', label: 'Likes' },
+              { key: 'tiktok_views', color: '#000000', label: 'Views' },
+              { key: 'tiktok_posts', color: '#EE1D52', label: 'Posts' }
             ]}
           />
         </div>

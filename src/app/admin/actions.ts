@@ -54,6 +54,34 @@ export async function updateOrderStatus(id: string, status: string) {
 
 export async function deleteOrder(id: string) {
   const supabase = await createClient()
+  
+  // 1. Get order details to restore quota
+  const { data: order } = await supabase.from('orders').select('batch_id, items').eq('id', id).single()
+  
+  if (order && order.batch_id) {
+    const { data: batch } = await supabase.from('batches').select('quota, menus').eq('id', order.batch_id).single()
+    
+    if (batch) {
+      const orderItems = order.items as any[]
+      const updatedMenus = { ...(batch.menus || {}) } as Record<string, number>
+      let restoredTotal = 0
+
+      orderItems.forEach((item: any) => {
+        const pId = item.productId || item.product_id
+        const q = item.qty || item.quantity || 0
+        if (pId) {
+          updatedMenus[pId] = (updatedMenus[pId] || 0) + q
+          restoredTotal += q
+        }
+      })
+
+      await supabase.from('batches').update({
+        quota: (batch.quota || 0) + restoredTotal,
+        menus: updatedMenus
+      }).eq('id', order.batch_id)
+    }
+  }
+
   await supabase.from('orders').delete().eq('id', id)
   revalidatePath('/admin')
 }
@@ -121,18 +149,22 @@ export async function saveSocialMetrics(formData: FormData) {
   const instagram_followers = parseInt(formData.get('instagram_followers') as string) || 0
   const instagram_likes = parseInt(formData.get('instagram_likes') as string) || 0
   const instagram_views = parseInt(formData.get('instagram_views') as string) || 0
+  const instagram_posts = parseInt(formData.get('instagram_posts') as string) || 0
   const tiktok_followers = parseInt(formData.get('tiktok_followers') as string) || 0
   const tiktok_likes = parseInt(formData.get('tiktok_likes') as string) || 0
   const tiktok_views = parseInt(formData.get('tiktok_views') as string) || 0
+  const tiktok_posts = parseInt(formData.get('tiktok_posts') as string) || 0
 
   const { error } = await supabase.from('social_metrics').upsert({
     date,
     instagram_followers,
     instagram_likes,
     instagram_views,
+    instagram_posts,
     tiktok_followers,
     tiktok_likes,
-    tiktok_views
+    tiktok_views,
+    tiktok_posts
   }, { onConflict: 'date' })
 
   if (error) console.error("saveSocialMetrics Error:", error)

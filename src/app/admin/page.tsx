@@ -22,27 +22,42 @@ export default async function AdminDashboard() {
 
   // Data Processing for Charts
   
-  // 1. Monthly Trend (Current Year)
-  const months = [
-    '01', '02', '03', '04', '05', '06', 
-    '07', '08', '09', '10', '11', '12'
-  ];
-  const currentYear = new Date().getFullYear().toString();
+  // 1. Weekly Trend (Last 12 Weeks)
+  const weeklyTrendData: any[] = [];
+  const now = new Date();
+  
+  // Create last 12 weeks slots
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(now.getDate() - (i * 7));
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    const monday = new Date(d.setDate(diff));
+    const weekLabel = monday.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    const weekStart = monday.toISOString().split('T')[0];
+    const weekEnd = new Date(monday);
+    weekEnd.setDate(monday.getDate() + 6);
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
 
-  const monthlyTrendData = months.map(month => {
-    const period = `${currentYear}-${month}`;
     const orderIncome = confirmedOrders
-      .filter(o => o.created_at.startsWith(period))
+      .filter(o => {
+        const orderDate = o.created_at.split('T')[0];
+        return orderDate >= weekStart && orderDate <= weekEndStr;
+      })
       .reduce((acc, o) => acc + o.total_price, 0);
-    const manualIncome = (manualIncomes || [])
-      .filter(inc => inc.created_at.startsWith(period))
+
+    const manualInc = (manualIncomes || [])
+      .filter(inc => {
+        const incDate = inc.created_at.split('T')[0];
+        return incDate >= weekStart && incDate <= weekEndStr;
+      })
       .reduce((acc, inc) => acc + inc.amount, 0);
-    
-    return {
-      date: new Date(`${currentYear}-${month}-01`).toLocaleDateString('id-ID', { month: 'short' }),
-      income: orderIncome + manualIncome
-    };
-  });
+
+    weeklyTrendData.push({
+      date: weekLabel,
+      income: orderIncome + manualInc
+    });
+  }
 
   // 2. Top Products
   const productSales: Record<string, number> = {};
@@ -142,16 +157,16 @@ export default async function AdminDashboard() {
 
       {/* Visual Analytics Section */}
       <section className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Monthly Trend Chart */}
+        {/* Weekly Trend Chart */}
         <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3 text-primary">
               <TrendingUp size={20} className="text-accent" />
-              <h3 className="text-2xl font-serif italic">Monthly Income Trend</h3>
+              <h3 className="text-2xl font-serif italic">Weekly Income Trend</h3>
             </div>
-            <span className="text-xs tracking-widest uppercase text-primary/40 font-bold">Current Year</span>
+            <span className="text-xs tracking-widest uppercase text-primary/40 font-bold">Last 12 Weeks</span>
           </div>
-          <DailyTrendChart data={monthlyTrendData} />
+          <DailyTrendChart data={weeklyTrendData} />
         </div>
 
         {/* Financial Comparison */}
