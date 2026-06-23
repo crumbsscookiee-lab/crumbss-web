@@ -84,6 +84,27 @@ export default async function AdminDashboard() {
     { name: 'Expenses', value: totalExpense },
   ];
 
+  // 4. Calculate Max Growth
+  let maxGrowth = 0;
+  let maxGrowthWeek = "";
+  
+  for (let i = 1; i < weeklyTrendData.length; i++) {
+    const prev = weeklyTrendData[i - 1].income;
+    const curr = weeklyTrendData[i].income;
+    if (prev > 0) {
+      const growth = ((curr - prev) / prev) * 100;
+      if (growth > maxGrowth) {
+        maxGrowth = growth;
+        maxGrowthWeek = weeklyTrendData[i].date;
+      }
+    } else if (prev === 0 && curr > 0) {
+      if (100 > maxGrowth) {
+        maxGrowth = 100;
+        maxGrowthWeek = weeklyTrendData[i].date;
+      }
+    }
+  }
+
   const forceSync = async () => {
     'use server';
     revalidatePath('/admin');
@@ -158,13 +179,22 @@ export default async function AdminDashboard() {
       {/* Visual Analytics Section */}
       <section className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Weekly Trend Chart */}
-        <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
+        <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div className="flex items-center gap-3 text-primary">
               <TrendingUp size={20} className="text-accent" />
               <h3 className="text-2xl font-serif italic">Weekly Income Trend</h3>
             </div>
-            <span className="text-xs tracking-widest uppercase text-primary/40 font-bold">Last 12 Weeks</span>
+            <div className="flex items-center gap-4">
+              {maxGrowth > 0 && (
+                <div className="flex items-center gap-2 bg-accent/10 px-3 py-1.5 border border-accent/20">
+                  <span className="text-[10px] tracking-widest uppercase font-bold text-primary/60">Peak Growth</span>
+                  <span className="text-xs font-bold text-green-600">+{maxGrowth.toFixed(1)}%</span>
+                  <span className="text-[10px] tracking-widest uppercase text-primary/60">({maxGrowthWeek})</span>
+                </div>
+              )}
+              <span className="text-xs tracking-widest uppercase text-primary/40 font-bold hidden md:block">Last 12 Weeks</span>
+            </div>
           </div>
           <DailyTrendChart data={weeklyTrendData} />
         </div>

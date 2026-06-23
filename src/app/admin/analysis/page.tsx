@@ -89,6 +89,44 @@ export default async function AnalysisPage() {
     tiktok_posts: 0
   };
 
+  const calculatePeakGrowth = (data: any[], key: string) => {
+    let maxGrowth = 0;
+    let maxWeek = "";
+    for (let i = 1; i < data.length; i++) {
+      const prev = data[i - 1][key] || 0;
+      const curr = data[i][key] || 0;
+      if (prev > 0) {
+        const growth = ((curr - prev) / prev) * 100;
+        if (growth > maxGrowth) {
+          maxGrowth = growth;
+          maxWeek = data[i].date;
+        }
+      } else if (prev === 0 && curr > 0) {
+        if (100 > maxGrowth) {
+          maxGrowth = 100;
+          maxWeek = data[i].date;
+        }
+      }
+    }
+    return { growth: maxGrowth, week: maxWeek };
+  };
+
+  const customerPeak = calculatePeakGrowth(customerChartData, 'unique');
+
+  const igPeaks = {
+    followers: calculatePeakGrowth(socialChartData, 'instagram_followers'),
+    likes: calculatePeakGrowth(socialChartData, 'instagram_likes'),
+    views: calculatePeakGrowth(socialChartData, 'instagram_views'),
+    posts: calculatePeakGrowth(socialChartData, 'instagram_posts'),
+  };
+
+  const ttPeaks = {
+    followers: calculatePeakGrowth(socialChartData, 'tiktok_followers'),
+    likes: calculatePeakGrowth(socialChartData, 'tiktok_likes'),
+    views: calculatePeakGrowth(socialChartData, 'tiktok_views'),
+    posts: calculatePeakGrowth(socialChartData, 'tiktok_posts'),
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 bg-surface/20">
       <header className="p-8 md:p-12 border-b border-primary/20 bg-background">
@@ -127,19 +165,19 @@ export default async function AnalysisPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Followers</label>
-                    <input name="instagram_followers" type="number" placeholder={latestMetrics.instagram_followers.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="instagram_followers" type="number" defaultValue={latestMetrics.instagram_followers.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Likes</label>
-                    <input name="instagram_likes" type="number" placeholder={latestMetrics.instagram_likes.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="instagram_likes" type="number" defaultValue={latestMetrics.instagram_likes.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Views</label>
-                    <input name="instagram_views" type="number" placeholder={latestMetrics.instagram_views.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="instagram_views" type="number" defaultValue={latestMetrics.instagram_views.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Posts</label>
-                    <input name="instagram_posts" type="number" placeholder={latestMetrics.instagram_posts?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="instagram_posts" type="number" defaultValue={latestMetrics.instagram_posts?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                 </div>
               </div>
@@ -153,19 +191,19 @@ export default async function AnalysisPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Followers</label>
-                    <input name="tiktok_followers" type="number" placeholder={latestMetrics.tiktok_followers?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="tiktok_followers" type="number" defaultValue={latestMetrics.tiktok_followers?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Likes</label>
-                    <input name="tiktok_likes" type="number" placeholder={latestMetrics.tiktok_likes?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="tiktok_likes" type="number" defaultValue={latestMetrics.tiktok_likes?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Views</label>
-                    <input name="tiktok_views" type="number" placeholder={latestMetrics.tiktok_views?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="tiktok_views" type="number" defaultValue={latestMetrics.tiktok_views?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Posts</label>
-                    <input name="tiktok_posts" type="number" placeholder={latestMetrics.tiktok_posts?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                    <input name="tiktok_posts" type="number" defaultValue={latestMetrics.tiktok_posts?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                 </div>
               </div>
@@ -180,11 +218,43 @@ export default async function AnalysisPage() {
 
       <section className="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Instagram Analysis */}
-        <div className="bg-background border border-primary/20 p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3 text-primary">
-              <Camera size={20} className="text-[#E1306C]" />
-              <h3 className="text-2xl font-serif italic">Instagram Performance (Weekly)</h3>
+        <div className="bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
+          <div className="flex flex-col mb-8 gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-primary">
+                <Camera size={20} className="text-[#E1306C]" />
+                <h3 className="text-2xl font-serif italic">Instagram Performance</h3>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {igPeaks.followers.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#E1306C]/30 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Flw</span>
+                  <span className="text-[10px] font-bold text-green-600">+{igPeaks.followers.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({igPeaks.followers.week})</span>
+                </div>
+              )}
+              {igPeaks.likes.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#833AB4]/30 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Likes</span>
+                  <span className="text-[10px] font-bold text-green-600">+{igPeaks.likes.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({igPeaks.likes.week})</span>
+                </div>
+              )}
+              {igPeaks.views.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#F77737]/30 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Views</span>
+                  <span className="text-[10px] font-bold text-green-600">+{igPeaks.views.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({igPeaks.views.week})</span>
+                </div>
+              )}
+              {igPeaks.posts.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#FFDC80]/50 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Posts</span>
+                  <span className="text-[10px] font-bold text-green-600">+{igPeaks.posts.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({igPeaks.posts.week})</span>
+                </div>
+              )}
             </div>
           </div>
           <MultiLineChart 
@@ -199,11 +269,43 @@ export default async function AnalysisPage() {
         </div>
 
         {/* TikTok Analysis */}
-        <div className="bg-background border border-primary/20 p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3 text-primary">
-              <VideoIcon size={20} className="text-[#00F2EA]" />
-              <h3 className="text-2xl font-serif italic">TikTok Performance (Weekly)</h3>
+        <div className="bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
+          <div className="flex flex-col mb-8 gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-primary">
+                <VideoIcon size={20} className="text-[#00F2EA]" />
+                <h3 className="text-2xl font-serif italic">TikTok Performance</h3>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {ttPeaks.followers.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#00F2EA]/50 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Flw</span>
+                  <span className="text-[10px] font-bold text-green-600">+{ttPeaks.followers.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({ttPeaks.followers.week})</span>
+                </div>
+              )}
+              {ttPeaks.likes.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#FF0050]/30 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Likes</span>
+                  <span className="text-[10px] font-bold text-green-600">+{ttPeaks.likes.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({ttPeaks.likes.week})</span>
+                </div>
+              )}
+              {ttPeaks.views.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#000000]/30 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Views</span>
+                  <span className="text-[10px] font-bold text-green-600">+{ttPeaks.views.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({ttPeaks.views.week})</span>
+                </div>
+              )}
+              {ttPeaks.posts.growth > 0 && (
+                <div className="flex items-center gap-2 bg-background border border-[#EE1D52]/30 px-2 py-1">
+                  <span className="text-[9px] tracking-widest uppercase font-bold text-primary/60">Posts</span>
+                  <span className="text-[10px] font-bold text-green-600">+{ttPeaks.posts.growth.toFixed(0)}%</span>
+                  <span className="text-[8px] tracking-widest uppercase text-primary/40">({ttPeaks.posts.week})</span>
+                </div>
+              )}
             </div>
           </div>
           <MultiLineChart 
@@ -218,13 +320,22 @@ export default async function AnalysisPage() {
         </div>
 
         {/* Customer Growth */}
-        <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
+        <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div className="flex items-center gap-3 text-primary">
               <TrendingUp size={20} className="text-accent" />
               <h3 className="text-2xl font-serif italic">Cumulative Customer Growth</h3>
             </div>
-            <p className="text-xs text-primary/40 max-w-xs text-right">Unique customers (by WA number) over time.</p>
+            <div className="flex items-center gap-4">
+              {customerPeak.growth > 0 && (
+                <div className="flex items-center gap-2 bg-accent/10 px-3 py-1.5 border border-accent/20">
+                  <span className="text-[10px] tracking-widest uppercase font-bold text-primary/60">Peak Acq. Growth</span>
+                  <span className="text-xs font-bold text-green-600">+{customerPeak.growth.toFixed(1)}%</span>
+                  <span className="text-[10px] tracking-widest uppercase text-primary/60">({customerPeak.week})</span>
+                </div>
+              )}
+              <p className="text-xs text-primary/40 text-right hidden md:block">Unique customers (by WA number) over time.</p>
+            </div>
           </div>
           <GeneralLineChart 
             data={customerChartData} 

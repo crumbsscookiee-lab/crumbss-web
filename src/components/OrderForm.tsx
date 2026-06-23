@@ -157,10 +157,15 @@ export default function OrderForm({ products, activeBatch }: { products: Product
       proofUrl = publicUrlData.publicUrl;
 
       // Update Order with proof_url
-      const { error: updateError } = await supabase.from('orders').update({ proof_url: proofUrl }).eq('id', createdOrderId);
+      const { error: updateError, data: updatedOrder } = await supabase.from('orders').update({ proof_url: proofUrl }).eq('id', createdOrderId).select();
+      
       if (updateError) {
         console.error("Failed to update order proof:", updateError);
-        throw new Error("Gagal menyimpan bukti pembayaran ke database. Pastikan Policy UPDATE public pada orders sudah dibuat.");
+        throw new Error(`Gagal menyimpan bukti pembayaran: ${updateError.message}`);
+      }
+
+      if (!updatedOrder || updatedOrder.length === 0) {
+        throw new Error("Gagal menyimpan bukti pembayaran! Penyebab: RLS Policy UPDATE pada tabel 'orders' untuk public belum dibuat di Supabase.");
       }
 
       finishOrder();
