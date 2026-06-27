@@ -136,7 +136,7 @@ export default function OrderForm({ products, activeBatch }: { products: Product
       const options = {
         maxSizeMB: 1,
         maxWidthOrHeight: 1024,
-        useWebWorker: true,
+        useWebWorker: false,
       };
       const compressedFile = await imageCompression(file, options);
       
