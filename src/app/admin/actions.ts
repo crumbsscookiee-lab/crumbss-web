@@ -155,6 +155,9 @@ export async function saveSocialMetrics(formData: FormData) {
   const tiktok_views = parseInt(formData.get('tiktok_views') as string) || 0
   const tiktok_posts = parseInt(formData.get('tiktok_posts') as string) || 0
 
+  const web_visitors = parseInt(formData.get('web_visitors') as string) || 0
+  const web_pageviews = parseInt(formData.get('web_pageviews') as string) || 0
+
   const { error } = await supabase.from('social_metrics').upsert({
     date,
     instagram_followers,
@@ -164,7 +167,9 @@ export async function saveSocialMetrics(formData: FormData) {
     tiktok_followers,
     tiktok_likes,
     tiktok_views,
-    tiktok_posts
+    tiktok_posts,
+    web_visitors,
+    web_pageviews
   }, { onConflict: 'date' })
 
   if (error) console.error("saveSocialMetrics Error:", error)

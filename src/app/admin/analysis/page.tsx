@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
-import { TrendingUp, Users, Heart, Eye, Camera, Save, Calendar, Video as VideoIcon } from "lucide-react";
-import { GeneralLineChart, MultiLineChart } from "../DashboardCharts";
+import { TrendingUp, Users, Heart, Eye, Camera, Save, Calendar, Video as VideoIcon, Globe, BarChart3 } from "lucide-react";
+import { GeneralLineChart, MultiLineChart, PeakGrowthChart } from "../DashboardCharts";
 import { saveSocialMetrics } from "../actions";
 
 export default async function AnalysisPage() {
@@ -86,7 +86,9 @@ export default async function AnalysisPage() {
     tiktok_followers: 0,
     tiktok_likes: 0,
     tiktok_views: 0,
-    tiktok_posts: 0
+    tiktok_posts: 0,
+    web_visitors: 0,
+    web_pageviews: 0
   };
 
   const calculateGrowthStats = (data: any[], key: string) => {
@@ -133,6 +135,24 @@ export default async function AnalysisPage() {
     views: calculateGrowthStats(socialChartData, 'tiktok_views'),
     posts: calculateGrowthStats(socialChartData, 'tiktok_posts'),
   };
+
+  const webPeaks = {
+    visitors: calculateGrowthStats(socialChartData, 'web_visitors'),
+    pageviews: calculateGrowthStats(socialChartData, 'web_pageviews'),
+  };
+
+  const peakData = [
+    { name: 'IG Flw', growth: igPeaks.followers.growth, week: igPeaks.followers.week, fill: '#E1306C' },
+    { name: 'IG Likes', growth: igPeaks.likes.growth, week: igPeaks.likes.week, fill: '#833AB4' },
+    { name: 'IG Views', growth: igPeaks.views.growth, week: igPeaks.views.week, fill: '#F77737' },
+    { name: 'IG Posts', growth: igPeaks.posts.growth, week: igPeaks.posts.week, fill: '#FFDC80' },
+    { name: 'TT Flw', growth: ttPeaks.followers.growth, week: ttPeaks.followers.week, fill: '#00F2EA' },
+    { name: 'TT Likes', growth: ttPeaks.likes.growth, week: ttPeaks.likes.week, fill: '#FF0050' },
+    { name: 'TT Views', growth: ttPeaks.views.growth, week: ttPeaks.views.week, fill: '#000000' },
+    { name: 'TT Posts', growth: ttPeaks.posts.growth, week: ttPeaks.posts.week, fill: '#EE1D52' },
+    { name: 'Web Vis', growth: webPeaks.visitors.growth, week: webPeaks.visitors.week, fill: '#3b82f6' },
+    { name: 'Web Pgv', growth: webPeaks.pageviews.growth, week: webPeaks.pageviews.week, fill: '#8b5cf6' },
+  ].filter(d => d.growth > 0).sort((a, b) => b.growth - a.growth);
 
   const renderBadge = (label: string, peakData: { growth: number, week: string, avg: number }, baseColor: string) => {
     if (peakData.growth <= 0 && peakData.avg === 0) return null;
@@ -181,14 +201,14 @@ export default async function AnalysisPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
               {/* Instagram Inputs */}
               <div className="space-y-6 p-6 border border-primary/10 bg-background">
                 <div className="flex items-center gap-2 text-primary">
                   <Camera size={20} className="text-[#E1306C]" />
                   <span className="font-bold tracking-widest uppercase text-sm">Instagram</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Followers</label>
                     <input name="instagram_followers" type="number" defaultValue={latestMetrics.instagram_followers.toString()} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
@@ -214,7 +234,7 @@ export default async function AnalysisPage() {
                   <VideoIcon size={20} className="text-[#00F2EA]" />
                   <span className="font-bold tracking-widest uppercase text-sm">TikTok</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Followers</label>
                     <input name="tiktok_followers" type="number" defaultValue={latestMetrics.tiktok_followers?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
@@ -230,6 +250,24 @@ export default async function AnalysisPage() {
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Posts</label>
                     <input name="tiktok_posts" type="number" defaultValue={latestMetrics.tiktok_posts?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Website Inputs */}
+              <div className="space-y-6 p-6 border border-primary/10 bg-background">
+                <div className="flex items-center gap-2 text-primary">
+                  <Globe size={20} className="text-[#3b82f6]" />
+                  <span className="font-bold tracking-widest uppercase text-sm">Website</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Visitors</label>
+                    <input name="web_visitors" type="number" defaultValue={latestMetrics.web_visitors?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] tracking-widest uppercase font-bold text-primary/40">Pageviews</label>
+                    <input name="web_pageviews" type="number" defaultValue={latestMetrics.web_pageviews?.toString() || "0"} className="bg-surface border border-primary/10 p-2 text-sm outline-none focus:border-accent text-primary" />
                   </div>
                 </div>
               </div>
@@ -297,6 +335,29 @@ export default async function AnalysisPage() {
           />
         </div>
 
+        {/* Website Analysis */}
+        <div className="bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
+          <div className="flex flex-col mb-8 gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-primary">
+                <Globe size={20} className="text-[#3b82f6]" />
+                <h3 className="text-2xl font-serif italic">Website Performance</h3>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {renderBadge("Visitors", webPeaks.visitors, "#3b82f6")}
+              {renderBadge("Pageviews", webPeaks.pageviews, "#8b5cf6")}
+            </div>
+          </div>
+          <MultiLineChart 
+            data={socialChartData}
+            lines={[
+              { key: 'web_visitors', color: '#3b82f6', label: 'Visitors' },
+              { key: 'web_pageviews', color: '#8b5cf6', label: 'Pageviews' }
+            ]}
+          />
+        </div>
+
         {/* Customer Growth */}
         <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -332,6 +393,20 @@ export default async function AnalysisPage() {
             color="#7c2d12"
           />
         </div>
+
+        {/* Peak Growth Comparison */}
+        {peakData.length > 0 && (
+          <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+              <div className="flex items-center gap-3 text-primary">
+                <BarChart3 size={20} className="text-accent" />
+                <h3 className="text-2xl font-serif italic">Peak Growth Comparison</h3>
+              </div>
+              <p className="text-xs text-primary/40 text-right hidden md:block">Highest percentage spike per metric.</p>
+            </div>
+            <PeakGrowthChart data={peakData} />
+          </div>
+        )}
       </section>
     </div>
   );

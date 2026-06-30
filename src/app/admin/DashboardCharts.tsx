@@ -274,3 +274,62 @@ export function FinancialPieChart({ data }: { data: FinancialData[] }) {
     </div>
   );
 }
+
+const PeakGrowthTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-background border border-primary p-3 shadow-lg min-w-[150px]">
+        <p className="font-bold text-primary mb-2 border-b border-primary/20 pb-1">{label}</p>
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between items-center gap-4">
+            <span className="text-xs text-primary/60 uppercase tracking-widest">Growth</span>
+            <span className="text-green-600 font-bold">
+              +{Number(data.growth).toFixed(1)}%
+            </span>
+          </div>
+          {data.week && (
+            <div className="flex justify-between items-center gap-4 mt-1 pt-1 border-t border-primary/10">
+              <span className="text-[10px] text-primary/40 uppercase tracking-widest">Date</span>
+              <span className="text-[10px] font-bold text-primary/80">
+                {data.week}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+export function PeakGrowthChart({ data }: { data: { name: string, growth: number, week?: string, fill: string }[] }) {
+  return (
+    <div className="h-[300px] w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          <XAxis 
+            dataKey="name" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#7c2d12', fontSize: 10, fontWeight: 'bold' }}
+            dy={15}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#7c2d12', fontSize: 10 }} 
+            tickFormatter={(value) => `${value}%`}
+          />
+          <Tooltip content={<PeakGrowthTooltip />} cursor={{ fill: '#ea580c10' }} />
+          <Bar dataKey="growth" radius={[4, 4, 0, 0]} barSize={30}>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
