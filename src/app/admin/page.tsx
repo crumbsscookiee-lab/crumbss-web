@@ -84,26 +84,33 @@ export default async function AdminDashboard() {
     { name: 'Expenses', value: totalExpense },
   ];
 
-  // 4. Calculate Max Growth
   let maxGrowth = 0;
   let maxGrowthWeek = "";
+  let totalGrowth = 0;
+  let growthCount = 0;
   
   for (let i = 1; i < weeklyTrendData.length; i++) {
     const prev = weeklyTrendData[i - 1].income;
     const curr = weeklyTrendData[i].income;
     if (prev > 0) {
       const growth = ((curr - prev) / prev) * 100;
+      totalGrowth += growth;
+      growthCount++;
       if (growth > maxGrowth) {
         maxGrowth = growth;
         maxGrowthWeek = weeklyTrendData[i].date;
       }
     } else if (prev === 0 && curr > 0) {
+      totalGrowth += 100;
+      growthCount++;
       if (100 > maxGrowth) {
         maxGrowth = 100;
         maxGrowthWeek = weeklyTrendData[i].date;
       }
     }
   }
+
+  const avgGrowth = growthCount > 0 ? totalGrowth / growthCount : 0;
 
   const forceSync = async () => {
     'use server';
@@ -191,6 +198,14 @@ export default async function AdminDashboard() {
                   <span className="text-[10px] tracking-widest uppercase font-bold text-primary/60">Peak Growth</span>
                   <span className="text-xs font-bold text-green-600">+{maxGrowth.toFixed(1)}%</span>
                   <span className="text-[10px] tracking-widest uppercase text-primary/60">({maxGrowthWeek})</span>
+                </div>
+              )}
+              {avgGrowth !== 0 && (
+                <div className="flex items-center gap-2 bg-accent/10 px-3 py-1.5 border border-accent/20">
+                  <span className="text-[10px] tracking-widest uppercase font-bold text-primary/60">Avg Growth</span>
+                  <span className={`text-xs font-bold ${avgGrowth > 0 ? 'text-green-600' : 'text-danger'}`}>
+                    {avgGrowth > 0 ? '+' : ''}{avgGrowth.toFixed(1)}%
+                  </span>
                 </div>
               )}
               <span className="text-xs tracking-widest uppercase text-primary/40 font-bold hidden md:block">Last 12 Weeks</span>
