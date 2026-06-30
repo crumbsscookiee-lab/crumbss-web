@@ -334,7 +334,7 @@ export default async function AnalysisPage() {
             ]}
           />
         </div>
-
+            
         {/* Website Analysis */}
         <div className="bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
           <div className="flex flex-col mb-8 gap-4">
@@ -357,7 +357,19 @@ export default async function AnalysisPage() {
             ]}
           />
         </div>
-
+ {/* Peak Growth Comparison */}
+        {peakData.length > 0 && (
+          <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+              <div className="flex items-center gap-3 text-primary">
+                <BarChart3 size={20} className="text-accent" />
+                <h3 className="text-2xl font-serif italic">Peak Growth Comparison</h3>
+              </div>
+              <p className="text-xs text-primary/40 text-right hidden md:block">Highest percentage spike per metric.</p>
+            </div>
+            <PeakGrowthChart data={peakData} />
+          </div>
+        )}
         {/* Customer Growth */}
         <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -394,19 +406,7 @@ export default async function AnalysisPage() {
           />
         </div>
 
-        {/* Peak Growth Comparison */}
-        {peakData.length > 0 && (
-          <div className="lg:col-span-2 bg-background border border-primary/20 p-8 shadow-sm flex flex-col">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-              <div className="flex items-center gap-3 text-primary">
-                <BarChart3 size={20} className="text-accent" />
-                <h3 className="text-2xl font-serif italic">Peak Growth Comparison</h3>
-              </div>
-              <p className="text-xs text-primary/40 text-right hidden md:block">Highest percentage spike per metric.</p>
-            </div>
-            <PeakGrowthChart data={peakData} />
-          </div>
-        )}
+       
       </section>
     </div>
   );
